@@ -30,11 +30,11 @@ Tally is not a 1-1 relation anymore, where a cued or active input of a vision mi
 
 To achive this, we abstracted the tally wire from the vison mixer to the tally light, to a 3 stage workflow.
 We now having tally producers which generates tally information and tally consumers which needs tally information.
-Both are connected to the tally processor, which is generating tally information for the consumer(s) based on a ruleset 
-and the producer(s) input. 
+Both are connected to the tally processor, which is generating tally information for the consumer(s) 
+based on a ruleset and the producer(s) input. 
 
-						 rules
-						   |
+			      		rules
+						  |
 tally producer	-->	tally processor -->	tally consumer
 
 Further on, 
@@ -46,11 +46,11 @@ Every input or output, the so called channels of the device, represents exactly 
 So if we have a tally with both, active and cued information, that will make 2 separat channels.
 
 The device has to set the input state of its inputs based on its own working manner. It is kind of a translator
-between the logical representation and the the one of the used tally technique.
+between the logical representation and the one of the used tally technique.
 The input will inform outputs which are linked to it that it has changed so that they 
 can inform their device to translate the logical state to the tally technique used.
 
-			DEVICE			  	|			TALLYPROCESSOR CORE		  	|				DEVICE
+	DEVICE			  	|			TALLYPROCESSOR CORE		  	|				DEVICE
 													 _______________
 													|				|--> output changed --> device changes tally output
 													|				|-->	...
@@ -81,7 +81,8 @@ The second most important class(s) are the ::input:: and ::output::
 They represents the channels of your device, each channel has it's own instance.
 They hold all the logic and rules defined by the ::configprocessor:: which is the main core 
 of TallyProcessor.
-::configprocessor:: generates all devices, their ::input:: and ::output:: instances and the ruleset defined in the config file.
+::configprocessor:: generates all devices, their ::input:: and ::output:: instances 
+and the ruleset defined in the config file.
 So you dont' have to deal with that at all.
 Now I give a listening of the important functions and subs of these classes:
 
@@ -170,7 +171,8 @@ When ever you use the logger, please provide the message in the following format
 	"nameOfDevice: message"
 without any new lines or other whitespaces at the end.
 You also should only use linebreak within the message if they are realy needed.
-Be aware that there is no standard logger active after reading in the config. If no logger is configured within the config file,
+Be aware that there is no standard logger active after reading in the config. 
+If no logger is configured within the config file,
 messages won't be displayed at all. However, from the application startup till reading in the config file, 
 there will be a temporary logger writing to the console.
 
@@ -184,7 +186,8 @@ Please see the example.config.xml for explaination.
 All configuration needed for your own device can be placed within the 
 <parameter></parameter> 
 tag in the <device></device> section of your device.
-Inside the <parameter> tag you can add what ever you want as the whole <parameter> tag will be delegated to your device constructor.
+Inside the <parameter> tag you can add what ever you want as the whole <parameter> tag 
+will be delegated to your device constructor.
 So if your device definition is like that:
 <device>
 	...
