@@ -1,0 +1,308 @@
+DEVELOPER.TXT
+-------------
+
+In this document I will explain how the TallyProcessor core works and how to extend it with own device classes.
+To make things easyier, I provided a well commented example device within the code, the simpleNetwork class.
+
+To understand what TallyProcessor is for, please see the readme.txt first.
+
+This software is published under the GNU GPL 3.0
+You find a copy of this licence in the file gpl-3.0.txt i under TallyProcessors program directory.
+
+
+Content:
+
+1. Working scheme
+2. Classes and Interfaces
+3. Logging
+4. Config file
+5. Adding devices
+6. FAQ
+
+
+1. Working scheme:
+==================
+
+TallyProcessor is, as the name tells, a program to process tally information over different devices and techniques.
+It abstracts the simple wired tally to a logical layer and extends it's usage possibleties. You can connect different
+tally techniques, route tally information over networks and define the whole tally logic.
+Tally is not a 1-1 relation anymore, where a cued or active input of a vision mixer illuminates a camera tally.
+
+To achive this, we abstracted the tally wire from the vison mixer to the tally light, to a 3 stage workflow.
+We now having tally producers which generates tally information and tally consumers which needs tally information.
+Both are connected to the tally processor, which is generating tally information for the consumer(s) based on a ruleset 
+and the producer(s) input. 
+
+						 rules
+						   |
+tally producer	-->	tally processor -->	tally consumer
+
+Further on, 
+tally producers will be named inputs
+tally consumers will be named outputs
+and they belong to a device, which is a piece of code and maybe some hardware.
+A device can contain both, input and output.
+Every input or output, the so called channels of the device, represents exactly one logical information.
+So if we have a tally with both, active and cued information, that will make 2 separat channels.
+
+The device has to set the input state of its inputs based on its own working manner. It is kind of a translator
+between the logical representation and the the one of the used tally technique.
+The input will inform outputs which are linked to it that it has changed so that they 
+can inform their device to translate the logical state to the tally technique used.
+
+			DEVICE			  	|			TALLYPROCESSOR CORE		  	|				DEVICE
+													 _______________
+													|				|--> output changed --> device changes tally output
+													|				|-->	...
+device registers input change --> input changed --> |linked outputs	|--> output changed --> device changes tally output
+													|				|-->	...
+													|_______________|--> output changed --> device changes tally output
+
+
+2. Classes and Interaces:
+=========================
+
+To make things clear, I will use the follwing naming conventions:
+classes:	::CLASSNAME::
+interfaces:	I:INTERFACENAME::
+functions:	.FUNCTIONNAME(PARAMETER:TYPECLASS):TYPECLASS
+			::CLASSNAME:.FUNCTIONNAME()
+subs:		.SUBNAME(PARAMETER:TYPECLASS)
+			::CLASSNAME:.SUBNAME()
+
+The most important class you're used to know is the ::device:: and its interface I:IDevice::
+These bothe are needed when you want to implement your own devices for TallyProcessor.
+Every device has to implement I:IDevice::
+You can save a lot of time by extending ::device:: within your device class.
+It holds a lot of generic functions and members that will be needed.
+Never the less, there are a few functions you have to implement your self.
+
+The second most important class(s) are the ::input:: and ::output::
+They represents the channels of your device, each channel has it's own instance.
+They hold all the logic and rules defined by the ::configprocessor:: which is the main core 
+of TallyProcessor.
+::configprocessor:: generates all devices, their ::input:: and ::output:: instances and the ruleset defined in the config file.
+So you dont' have to deal with that at all.
+Now I give a listening of the important functions and subs of these classes:
+
+If function is marked:
+* 		=		must be implemented but could be inherited from ::device::
+** 		=		must be overriden/overloaded by own devices if it has outputs
+***		= 		must be overriden/overloaded by own devices
+
+::device:: implents I:IDevice::
+-------------------------------
+.new(name:String, xml:String)***							| 	Constructor as it is called by ::configprocessor::
+															|
+.init():boolean**											|	Called by ::configprocessor:: when all devices are configured. 
+															|	Should start the device and return true on success.
+															|
+.isInitialized():Boolean***									|	Returns the initialization state of the device. 
+															|	If true, the device should be working.
+															|
+.close()*													|	Will be called by ::configprocessor:: at program termination.
+															|	Make sure to stop all your work and free resources before returning.
+															|
+.hasChanged(output:output)**								|	Will be called by a ::output:: of this device that has changed.
+															|	Should take that change to the real output.
+															|
+.getOutputByName(name:String):output*						|	All the get***By*** functions are designed to easily
+.getOutputByChannel(channel:Integer):output*				|	get a specific ::input::/::output:: of this device.
+.getOutputByDeviceChannel(channel:Integer):output*			|	::output::/::input:: have 3 identifications which could be used.
+.getInputByName(name:String):input*							|	The name and the global channel number which are unique over all
+.getInputByChannel(channel:Integer):input*					|	::device:: and a lokal channel number which is unique for that ::device::
+.getInputByDeviceChannel(channel:Integer):input*			|	
+.getOutputs():List(Of ::output::)*							|	You can get a list of all ::output::/::input:: at a ::device::
+.getInputs():List(Of ::input::)*							|
+.getName():String*											| 	Returns the name as given in the config
+.getConfig():String*										| 	Returns the config definition as xml string
+.getInChannels():Integer*									|	Returns the number of input/output channels of a ::device::
+.getOutChannels():Integer*									|
+
+
+::output::
+----------
+.getName():String											| 	Returns the name of this channel
+.getChannel():Integer										|	Returns the global channel number of this channel
+.getState():Boolean											| 	Returns the logical state of this channel
+.getDevice():device											|	Returns the ::device:: this channel belongs to
+.hasChanged()												|	Is called when a linked input has changed its state and
+															|	and the output has to reevaluate its state
+
+::input::
+---------
+.getName():String											| 	Returns the name of this channel
+.getChannel():Integer										|	Returns the global channel number of this channel
+.getState():Boolean											| 	Returns the logical state of this channel
+.getDevice():device											|	Returns the ::device:: this channel belongs to
+.changeState(state:Boolean)									|	Changes the state of this channel. Should only be called by its device.
+.getOutputs():List(of ::output::)							|	Returns a list of all linked outputs that have to 
+															|	be informed of state changes. (You don't need to do this, 
+															|	it's done by the ::input:: itself)
+
+Now that you know all importent classes, lets have a look at some tools.
+
+
+
+3. Logging:
+===========
+
+In TallyProcessor all textual output is done via a logger tool.
+Instead of writing messages to the console with Console.writeLine(),
+you should use the logger module which provides a bunch of methods to 
+output text to the user.
+The logger is initialized and configured be the ::configprocessor:: and outputs the messages
+eighter to the console or a file or both as defined in the configfile.
+It is not just a output tool, it allows to categorize the messages you sent.
+It knows of 5 different categories:
+level:	meaning:		command:
+	0	critical error	logger.critical(message)
+	1	error			logger.err(message)
+	2	warn			logger.warn(message)
+	3	log				logger.log(message)
+	4	debug			logger.debug(message)
+You could use the given command or just logger.log(loglevel, message) to log your message.
+Each logger defined in the config will only output the messages of loglevel or smaller.
+It also will add a timestamp and the loglevel to each message.
+Please use the log and smaller realy only if it is a message worthy to be seen be everybody.
+This will kept it readable and clear to the user. Most messages will be debug by experiance.
+When ever you use the logger, please provide the message in the following format:
+	"nameOfDevice: message"
+without any new lines or other whitespaces at the end.
+You also should only use linebreak within the message if they are realy needed.
+Be aware that there is no standard logger active after reading in the config. If no logger is configured within the config file,
+messages won't be displayed at all. However, from the application startup till reading in the config file, 
+there will be a temporary logger writing to the console.
+
+
+4. Config file:
+===============
+
+The config file is in xml format and will be valdiated against a xsd file.
+Please see the example.config.xml for explaination.
+
+All configuration needed for your own device can be placed within the 
+<parameter></parameter> 
+tag in the <device></device> section of your device.
+Inside the <parameter> tag you can add what ever you want as the whole <parameter> tag will be delegated to your device constructor.
+So if your device definition is like that:
+<device>
+	...
+	<parameter>
+		<p1>foo</p1>
+		<p2 name="bar" />
+		...
+		Hello World!
+		...
+	</parameter>
+	...
+<device>
+you will receive this:
+<parameter>
+	<p1>foo</p1>
+	<p2 name="bar" />
+	...
+	Hello World!
+	...
+</parameter>
+and can parse it as you need within your device.
+
+
+5: Adding devices:
+==================
+
+Ok, know that you know a lot about how everything works and got some hints for your implementation, 
+lets talk about what to do and where to start.
+Again, have a look at the ::simpleNetwork:: device class in the sources. It is a good example.
+
+If you want to implement your own device for TallyProcessor, you have to take these steps:
+
+1. create a new class that implements I:IDevice:: 
+Take care of the name, it will be used in the config to identify your device and
+should be human readable and speaking
+
+2. to make things easy, inherit from ::device::
+
+3. Implement a 
+	Sub new(byVal name as String,byVal config as String)
+that calls the constructor of ::device:: if you inherit it.
+If you have class members, you may want to instanciate them in here. 
+
+4. Implement your init().
+Take care that you don't block the core process by staying in the init() sub.
+It is only to start your device. If you need infinity loops, 
+bring that code into an own thread and class (at best a Friend class),
+start them and return true if everything went well. If something unexpected happend 
+that stops you from running your device as wanted, return false.
+
+5. If you started threads or bind hardware,
+implement a sub close() where you stop and release them cleanly.
+
+6. If your device has outputs, implement a sub
+hasChanged(output as output) that will be called
+if the state of a output could have been changed.
+It may has not, but one of the linked inputs has changed, 
+so you have to reevaluate the state and may update the real
+output ouf your device.
+Get the state of the output with output.getState().
+
+7. You need parameters from the config file?
+add a privte sub config() to your class and
+parse the xml string provided at new() or, if you
+inherited form ::device::, use getConfig().
+Never worked with xml?
+Create a MSXML2.DomDocument and use .loadXML to parse
+the xml string. Use selectNodes("nodename")
+selectSingleNote("nodename"), getNodeTypedValue()
+etc. to get your data.
+See ::simpleNetwork:.config() as example.
+
+8. Add usefull logdata with 
+logger.log(), logger.debug(), logger.warn() etc...
+
+9. Try to catch exceptions that are correctable.
+If not, just let them throw.
+
+Thats it!
+
+
+6: FAQ:
+=======
+
+Why is there no GUI?
+	- Well, I'm just bad at making these and I think that
+	TallyProcessor don't need one. I actualy would like
+	to compile it as a service later on.
+	But feel free to add a GUI and send it to me,
+	I may add it as a optional component.
+	
+I need a device for my equipment but having absolutly no
+programing skills. Could I pay you to do it?
+	- Maybe. It depends on the time and the possibility
+	to test the code with your equipment.
+	Send a mail and we will talk about it.
+	
+Why VB.NET?
+	- Good question! Acutaly, I'm not a big fan of
+	VB, but for some reason, it was the easyest to get my
+	k8055d USB device running with VB. I tried C++ and C
+	but did not get it. Since I started with this device,
+	I never changed the language.
+	
+Why not using GitHub or SVN?
+	- I will add GitHub later and also a project page
+	with forum, manuals etc.
+	But for now, the download have to be enough.
+
+Could I get into the project?
+	- Yes, of course!
+	I realy would love to see people getting in.
+	Please send me an email.
+
+
+Contact me at:
+tallyprocessor{you knwo what belongs here :-)}development.diekkamp.de
+
+Prefered language is german ;-)
+English is ok, nothing else, sorry.
+ 
