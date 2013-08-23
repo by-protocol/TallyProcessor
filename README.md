@@ -1,8 +1,8 @@
 TallyProcessor
 ==============
 
-This software is published under the GNU GPL 3.0
-You find a copy of this licence in the file gpl-3.0.txt under TallyProcessors program directory.  
+This software is published under the GNU GPL 3.0.
+You find a copy of this licence in LICENSE.txt.  
 
 
 What is TallyProcessor:
@@ -59,7 +59,6 @@ Now we would define the following mappings for the outputs:
 This is pretty simple. So lets extend it a bit.
 We're adding a studiolight "on air" to our setting which should be active if one of the cameras is selected at the vision mixer. 
 The inputs would stay the same, but we would add an output:
-outputs:
 
 |Name|Mapping|
 |:---|:---|
@@ -80,7 +79,7 @@ You can combine operators and inputs in a mapping like this:
 
 |Name|Mapping|
 |:---|:---|
-|output|(input1 OR input2) AND NOT(input3)|
+|output|(input1 *OR* input2) *AND* *NOT*(input3)|
     
 Which would be active if one of the inputs 1, 2 are active but input3 inactive.
 You can not use outputs in your mappings, only inputs, operators and the constants true/false.
