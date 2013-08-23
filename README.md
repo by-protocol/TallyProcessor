@@ -39,6 +39,7 @@ to switch it on. These rulesets can contain a single input, which would be how t
 containing inputs, constants and boolean operators.
 As an example, lets say we have a vision mixer and two cameras. We want standard tally without cued information.
 So we would have 2 inputs and 2 outputs.
+
 |Name|Meaning|
 |:---|:---|
 |**INPUTS**||
@@ -49,6 +50,7 @@ So we would have 2 inputs and 2 outputs.
 |cam2|camera|
 	
 Now we would define the following mappings for the outputs:
+
 |Name|Mapping|
 |:---|:---|
 |cam1|vmix1|
@@ -58,6 +60,7 @@ This is pretty simple. So lets extend it a bit.
 We're adding a studiolight "on air" to our setting which should be active if one of the cameras is selected at the vision mixer. 
 The inputs would stay the same, but we would add an output:
 outputs:
+
 |Name|Mapping|
 |:---|:---|
 |cam1|vmix1|
@@ -65,6 +68,7 @@ outputs:
 |on air|vmix1 *OR* vmix2|
         
 This is still simple but you can extend it as you want and build complex rules using all defined inputs and the operators:
+
 |Operator|Meaning|
 |:---|:---|
 |*AND*|both inputs must be active to set it active|
@@ -73,6 +77,7 @@ This is still simple but you can extend it as you want and build complex rules u
 |*NOT*|the input must be inactive to set it active|
 
 You can combine operators and inputs in a mapping like this:
+
 |Name|Mapping|
 |:---|:---|
 |output|(input1 OR input2) AND NOT(input3)|
@@ -91,6 +96,7 @@ information provided by a modern vision mixer or playout server.
 
 Every tally technique needs a own device. 
 There are 3 kinds of devices shipped with TallyProcessor:
+
 * simpleNetwork   -   A network device sending and receiving tally data as xml string to/from a given IP and PORT
 * atem            -   A network device using the BlackmagicDesing ATEM SDK to get tally from ATEM vision mixers
 * k8055d          -   A dll based device reading and writing tally to a usb board with open collector ports
