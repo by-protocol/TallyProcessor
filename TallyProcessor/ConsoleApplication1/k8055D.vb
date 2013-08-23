@@ -16,6 +16,7 @@ Public Class k8055D
     Private Declare Function ReadDigitalChannel Lib "k8055d.dll" (ByVal Channel As Integer) As Boolean
     Private Declare Function ReadAllDigital Lib "k8055d.dll" () As Integer
 
+
     'Interne Variablen
     Private devAddress As Integer
     Private initState As Boolean
