@@ -2,7 +2,7 @@ TallyProcessor
 ==============
 
 This software is published under the GNU GPL 3.0
-You find a copy of this licence in the file gpl-3.0.txt under TallyProcessors program directory.
+You find a copy of this licence in the file gpl-3.0.txt under TallyProcessors program directory.  
 
 
 What is TallyProcessor:
@@ -11,7 +11,7 @@ What is TallyProcessor:
 TallyProcessor is a software for sending, receiving and combining tally information of various techniques and devices.
 It is designed to abstract the simple tally wireing, how it is done to connect a vision mixer to camera tally, to a logical layer
 and add the power of bringing different tally techniques together, defining rulesets to switch tallys based on tally inputs and implement
-whole tally networks.
+whole tally networks.  
 
 
 How does it work:
@@ -19,11 +19,11 @@ How does it work:
 
 To achive these goals, the straightforward tally topology to wire a vision mixer to a tallylamp or other tally consumers 
 is broken into a multi stage workflow where everything is splitted into
-    tally producers (i.e. vision mixer)         - providing tally information
-    tally consumer (i.e cameras, displays)      - consuming tally information
-    devices                                     - connection producers/consumers to TallyProcessor
-    channels                                    - a named input or output (which is a consumer/producer) of a device
-    mappings                                    - a ruleset which defines at which condtitions a tally output is active
+* tally producers (i.e. vision mixer)         - providing tally information
+* tally consumer (i.e cameras, displays)      - consuming tally information
+* devices                                     - connection producers/consumers to TallyProcessor
+* channels                                    - a named input or output (which is a consumer/producer) of a device
+* mappings                                    - a ruleset which defines at which condtitions a tally output is active
     
 In this abstraction, every tally information, further on named channel, is just a boolean state on/off, a unique name and channel number.
 To achive tallys with cued/active information, you will use two separat channels.
@@ -39,41 +39,43 @@ to switch it on. These rulesets can contain a single input, which would be how t
 containing inputs, constants and boolean operators.
 As an example, lets say we have a vision mixer and two cameras. We want standard tally without cued information.
 So we would have 2 inputs and 2 outputs.
-* inputs:
-    * vmix1 = vision mixer channel 1 active
-    * vmix2 = vision mixer channel 2 active
-* outputs:
-    * cam1 = camera 1
-    * cam2 = camera 2
+|Name|Meaning|
+|:---|:---|
+|**INPUTS**||
+|vmix1|vision mixer channel 1 active|
+|vmix2|vision mixer channel 2 active|
+|**OUTPUTS**||
+|cam1|camera|
+|cam2|camera|
 	
 Now we would define the following mappings for the outputs:
-    |Name|Mapping|
-	|...|...|
-    |cam1|vmix1|
-    |cam2|vmix2|
+|Name|Mapping|
+|:---|:---|
+|cam1|vmix1|
+|cam2|vmix2|
         
 This is pretty simple. So lets extend it a bit.
 We're adding a studiolight "on air" to our setting which should be active if one of the cameras is selected at the vision mixer. 
 The inputs would stay the same, but we would add an output:
 outputs:
-    |Name|Mapping|
-	|...|...|
-	|cam1|vmix1|
-    |cam2|vmix2|
-    |on air|vmix1 *OR* vmix2|
+|Name|Mapping|
+|:---|:---|
+|cam1|vmix1|
+|cam2|vmix2|
+|on air|vmix1 *OR* vmix2|
         
 This is still simple but you can extend it as you want and build complex rules using all defined inputs and the operators:
-    |Operator|Meaning|
-	|...|...|
-    |*AND*|both inputs must be active to set it active|
-    |*OR* |one and/or the other input must be active to set it active |
-    |*XOR*|one or the other but not both inputs must be acitve to set it active|
-    |*NOT*|the input must be inactive to set it active|
+|Operator|Meaning|
+|:---|:---|
+|*AND*|both inputs must be active to set it active|
+|*OR* |one and/or the other input must be active to set it active|
+|*XOR*|one or the other but not both inputs must be acitve to set it active|
+|*NOT*|the input must be inactive to set it active|
 
 You can combine operators and inputs in a mapping like this:
-    |Name|Mapping|
-	|...|...|
-    |output|(input1 OR input2) AND NOT(input3)|
+|Name|Mapping|
+|:---|:---|
+|output|(input1 OR input2) AND NOT(input3)|
     
 Which would be active if one of the inputs 1, 2 are active but input3 inactive.
 You can not use outputs in your mappings, only inputs, operators and the constants true/false.
@@ -89,9 +91,9 @@ information provided by a modern vision mixer or playout server.
 
 Every tally technique needs a own device. 
 There are 3 kinds of devices shipped with TallyProcessor:
-    * simpleNetwork   -   A network device sending and receiving tally data as xml string to/from a given IP and PORT
-    * atem            -   A network device using the BlackmagicDesing ATEM SDK to get tally from ATEM vision mixers
-    * k8055d          -   A dll based device reading and writing tally to a usb board with open collector ports
+* simpleNetwork   -   A network device sending and receiving tally data as xml string to/from a given IP and PORT
+* atem            -   A network device using the BlackmagicDesing ATEM SDK to get tally from ATEM vision mixers
+* k8055d          -   A dll based device reading and writing tally to a usb board with open collector ports
     
 But actualy, you should implement your own devices to get your tally working.
 See developer.txt for further information.
